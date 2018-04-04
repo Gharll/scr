@@ -1,89 +1,92 @@
 /*
  *
- * Napisaæ program obs³uguj¹cy sygna³y czasu rzeczywistego
+ * NapisaÄ‡ program obsÅ‚ugujÄ…cy sygnaÅ‚y czasu rzeczywistego
  * minimum to:
- * Wyœwietlenie komunikatu: "dosta³em sygna³ taki i taki"
+ * WyÅ›wietlenie komunikatu: "dostaÅ‚em sygnaÅ‚ taki i taki"
  * Dodatkowe wymogi
- * musi umieæ odebraæ dane przekazane od sygna³u
- * musi umieæ przetwarzaæ przynajmniej (ale mo¿e te¿ wiêcej) 2 ró¿ne sygna³y
- * obs³uga sygna³u ma byæ os³ug¹ synchroniczn¹ (przynajmniej 3 w¹tki)
- * (ad1. w tym 1 w¹tek macierzysty i 2 w¹tki do obs³ugi sygna³u)
- * napisaæ w³asn¹ komende kill która umo¿liwi wys³anie sygna³u z danymi
+ * musi umieÄ‡ odebraÄ‡ dane przekazane od sygnaÅ‚u
+ * musi umieÄ‡ przetwarzaÄ‡ przynajmniej (ale moÅ¼e teÅ¼ wiÄ™cej) 2 rÃ³Å¼ne sygnaÅ‚y
+ * obsÅ‚uga sygnaÅ‚u ma byÄ‡ osÅ‚ugÄ… synchronicznÄ… (przynajmniej 3 wÄ…tki)
+ * (ad1. w tym 1 wÄ…tek macierzysty i 2 wÄ…tki do obsÅ‚ugi sygnaÅ‚u)
+ * napisaÄ‡ wÅ‚asnÄ… komende kill ktÃ³ra umoÅ¼liwi wysÅ‚anie sygnaÅ‚u z danymi
  *
  * sigfill
  * siempty
  * sigaddset
  * sigdelset
+ *
+ *
+ * qnx login: 9
+ * top - lista wÄ…tek
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <signal.h>
 
-const int SIG_THREAD1 = SIGRMIN + 1;
-const int SIG_THREAD2 = SIGRMIN + 2;
-
 //for handling first signal
 void * thread1_func(void * arg){
-	
+
 	sigset_t set;
 	siginfo_t info;
 	int thread_id = pthread_self();
-	int signal = SIG_THREAD1;
-	
-	sigemptyset(&fun1);
-	sigaddset(&fun1, signal);
-	
-	printf("Thread id %d is listening for signal: %d .../n", thread_id, signal);
+	int signal = SIGRTMIN + 1;
+
+	sigemptyset(&set);
+	sigaddset(&set, signal);
+
+	printf("Thread id %d is listening for signal: %d ...\n", thread_id, signal);
 	while(1){
 		sigwaitinfo(&set,&info);
-	 	printf("Received signal %d, with code = %d, value %d\n",
-        	signo, info->si_code, info->si_value.sival_int);
+	 	printf("Received signal %d, with code = %d, value %d\n", signal, info.si_code, info.si_value.sival_int);
+	 	break;
 	}
 
-	
-	//return NULL;
+	printf("Thread id %d has been closed", thread_id);
+
+	return NULL;
 }
 
 //for handling second signal
 void * thread2_func(void * arg){
-	
+
 	sigset_t set;
 	siginfo_t info;
 	int thread_id = pthread_self();
-	int signal = SIG_THREAD2;
-	
-	sigemptyset(&fun1);
-	sigaddset(&fun1, signal);
-	
-	printf("Thread id %d is listening for signal: %d .../n", thread_id, signal);
+	int signal = SIGRTMIN + 2;;
+
+	sigemptyset(&set);
+	sigaddset(&set, signal);
+
+	printf("Thread id %d is listening for signal: %d ...\n", thread_id, signal);
 	while(1){
 		sigwaitinfo(&set,&info);
 	 	printf("Received signal %d, with code = %d, value %d\n",
-        	signo, info->si_code, info->si_value.sival_int);
+	 		signal, info.si_code, info.si_value.sival_int);
+	 		break;
 	}
-	
-	
-	//return NULL;
+
+	printf("Thread id %d has been closed", thread_id);
+	return NULL;
 }
 
 
 int main(void){
-		
+
 	sigset_t set;
-   
+
    sigemptyset(&set);
-   sigaddset(&set, SIG_THREAD1);
-   sigaddset(&set, SIG_THREAD2);
-   
-   	pthread_sigmask(SIG_BLOCK, &set, NULL)
-	
+   sigaddset(&set, SIGRTMIN + 1);
+   sigaddset(&set, SIGRTMIN + 2);
+
+   	pthread_sigmask(SIG_BLOCK, &set, NULL);
+
 	pthread_t thread1, thread2;
-	pthread_create(&t1, NULL, &thread1_func, NULL );
-   	pthread_create(&t2, NULL, &thread2_func, NULL );
-   
-   
+
+	pthread_create(&thread1, NULL, &thread1_func, NULL );
+   	pthread_create(&thread2, NULL, &thread2_func, NULL );
+
     //wait for threads
    	pthread_join(thread1, NULL);
    	pthread_join(thread2, NULL);
